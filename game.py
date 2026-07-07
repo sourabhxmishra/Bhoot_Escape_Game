@@ -8,11 +8,18 @@ Controls:  ← →  (or A / D) move  ·  SPACE  start / restart  ·  Esc / Q  qu
 Run:       python game.py         (needs pygame — see requirements.txt)
 """
 import os
+import sys
 import random
 
 import pygame
 
-BASE = os.path.dirname(os.path.abspath(__file__))
+
+def resource(name):
+    """Find a bundled asset whether running from source or a PyInstaller .exe."""
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, name)
+
+
 WIDTH, HEIGHT = 360, 640
 LANES = (30, 150, 270)          # x of the three lanes
 FPS = 60
@@ -22,7 +29,7 @@ WHITE, GREEN, RED = (240, 240, 240), (0, 220, 120), (235, 70, 70)
 
 
 def load(name, size):
-    image = pygame.image.load(os.path.join(BASE, name)).convert_alpha()
+    image = pygame.image.load(resource(name)).convert_alpha()
     return pygame.transform.smoothscale(image, size)
 
 
@@ -52,6 +59,10 @@ def main(max_frames=None):
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Bhoot Escape")
+    try:
+        pygame.display.set_icon(pygame.image.load(resource(os.path.join("assets", "icon.png"))))
+    except Exception:
+        pass
     clock = pygame.time.Clock()
     font = pygame.font.SysFont("Comic Sans MS,Arial", 26)
     big = pygame.font.SysFont("Comic Sans MS,Arial", 44)
