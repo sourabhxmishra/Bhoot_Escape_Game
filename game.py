@@ -1,70 +1,127 @@
-import pygame
-import random
-import sys
-screen_size = [360 , 640]
-screen = pygame.display.set_mode(screen_size)
-pygame.font.init()
-background = pygame.image.load('scene.jpg')
-character = pygame.image.load('character.png')
-bhoot1 = pygame.image.load('bhoot.png')
-def random_fall():
-    return -1*random.randint(50,1000)
-bhoot1_y = [random_fall(),random_fall(),random_fall()]
-character_x = 150
-score = 0
-def count_score(i):
-    global score
-    global keep_alive
-    score = score - 50
-    bhoot1_y[i] = random_fall()
-    if score <= -300:
-        keep_alive = False
+"""Bhoot Escape — a 2D dodge-the-ghosts arcade game built with pygame.
 
-def bhoot1_random_fall(i):
-    global score
-    if bhoot1_y[i] > 640:
-        bhoot1_y[i] = random_fall()
-        score = score + 5
-        print('score', score)
-    else:
-        bhoot1_y[i] = bhoot1_y[i] + 5
-def display_score(score):
-    font = pygame.font.SysFont('Comic Sans MS', 30)
-    score_text = 'Score: ' + str(score)
-    text_image = font.render(score_text,True, (0,255,0))
-    screen.blit(text_image,[20,10])
-keep_alive=True
-speed_control_of_bhoot1 = pygame.time.Clock()
-while keep_alive:
-    # if bhoot1_y > 640:
-    #     bhoot1_y = 0
-    # else:
-    #     bhoot1_y = bhoot1_y + 1
-    pygame.event.get()
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_RIGHT] and character_x < 280:
-        character_x = character_x + 6
-    elif keys[pygame.K_LEFT] and character_x > 0:
-        character_x = character_x - 6
-    bhoot1_random_fall(0)
-    bhoot1_random_fall(1)
-    bhoot1_random_fall(2)
-    screen.blit(background,[0,0])
-    screen.blit(character,[character_x,560])
-    screen.blit(bhoot1,[0,bhoot1_y[0]])
-    screen.blit(bhoot1,[140,bhoot1_y[1]])
-    screen.blit(bhoot1,[280,bhoot1_y[2]])
-    if bhoot1_y[0] > 500 and character_x < 70:
-        count_score(0)
-    if bhoot1_y[1] > 500 and character_x > 70 and character_x < 200:
-        count_score(1)
-    if bhoot1_y[2] > 500 and character_x > 220:
-        count_score(2)
-    display_score(score)
-    pygame.display.update()
-    speed_control_of_bhoot1.tick(80)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit();
-            sys.exit();
+Falling *bhoots* (ghosts) drop down three lanes; slide left/right to dodge them.
+Every ghost you dodge scores a point, a hit costs a life, and the ghosts speed
+up the longer you survive. It's tiny, so it runs happily on low-end hardware.
+
+Controls:  ← →  (or A / D) move  ·  SPACE  start / restart  ·  Esc / Q  quit
+Run:       python game.py         (needs pygame — see requirements.txt)
+"""
+import os
+import random
+
+import pygame
+
+BASE = os.path.dirname(os.path.abspath(__file__))
+WIDTH, HEIGHT = 360, 640
+LANES = (30, 150, 270)          # x of the three lanes
+FPS = 60
+START_LIVES = 3
+PLAYER = (60, 70)
+WHITE, GREEN, RED = (240, 240, 240), (0, 220, 120), (235, 70, 70)
+
+
+def load(name, size):
+    image = pygame.image.load(os.path.join(BASE, name)).convert_alpha()
+    return pygame.transform.smoothscale(image, size)
+
+
+class Ghost:
+    def __init__(self, image):
+        self.image = image
+        self.w, self.h = image.get_size()
+        self.spawn(first=True)
+
+    def spawn(self, first=False):
+        self.lane = random.randrange(len(LANES))
+        self.x = LANES[self.lane]
+        self.y = -random.randint(60, 720 if first else 320)
+
+    def rect(self):
+        return pygame.Rect(self.x, int(self.y), self.w, self.h)
+
+    def fall(self, speed):
+        self.y += speed
+        if self.y > HEIGHT:          # dodged
+            self.spawn()
+            return True
+        return False
+
+
+def main(max_frames=None):
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Bhoot Escape")
+    clock = pygame.time.Clock()
+    font = pygame.font.SysFont("Comic Sans MS,Arial", 26)
+    big = pygame.font.SysFont("Comic Sans MS,Arial", 44)
+
+    background = load("scene.jpg", (WIDTH, HEIGHT))
+    player_img = load("character.png", PLAYER)
+    ghost_img = load("bhoot.png", PLAYER)
+
+    def centre(text, fnt, colour, cy):
+        img = fnt.render(text, True, colour)
+        screen.blit(img, img.get_rect(center=(WIDTH // 2, cy)))
+
+    def fresh():
+        return {"ghosts": [Ghost(ghost_img) for _ in range(3)], "lane": 1,
+                "score": 0, "lives": START_LIVES}
+
+    state, game = ("playing", fresh()) if max_frames else ("start", fresh())
+    frame = 0
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+            if event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_ESCAPE, pygame.K_q):
+                    pygame.quit()
+                    return
+                if event.key == pygame.K_SPACE and state in ("start", "over"):
+                    game, state = fresh(), "playing"
+                elif state == "playing" and event.key in (pygame.K_LEFT, pygame.K_a):
+                    game["lane"] = max(0, game["lane"] - 1)
+                elif state == "playing" and event.key in (pygame.K_RIGHT, pygame.K_d):
+                    game["lane"] = min(len(LANES) - 1, game["lane"] + 1)
+
+        screen.blit(background, (0, 0))
+
+        if state == "playing":
+            speed = 4 + game["score"] // 10          # ramps up with score
+            player = pygame.Rect(LANES[game["lane"]], HEIGHT - 90, *PLAYER)
+            for ghost in game["ghosts"]:
+                if ghost.fall(speed):
+                    game["score"] += 1
+                screen.blit(ghost.image, (ghost.x, int(ghost.y)))
+                if ghost.rect().colliderect(player):
+                    game["lives"] -= 1
+                    ghost.spawn()
+                    if game["lives"] <= 0:
+                        state = "over"
+            screen.blit(player_img, player)
+            screen.blit(font.render(f"Score {game['score']}", True, GREEN), (16, 12))
+            screen.blit(font.render("HP " + "♥" * game["lives"], True, RED), (WIDTH - 120, 12))
+        elif state == "start":
+            centre("BHOOT ESCAPE", big, WHITE, HEIGHT // 2 - 50)
+            centre("Dodge the falling ghosts", font, WHITE, HEIGHT // 2 + 6)
+            centre("← →  move    SPACE  start", font, GREEN, HEIGHT // 2 + 54)
+        else:  # over
+            centre("GAME OVER", big, RED, HEIGHT // 2 - 50)
+            centre(f"Score  {game['score']}", font, WHITE, HEIGHT // 2 + 6)
+            centre("SPACE  play again", font, GREEN, HEIGHT // 2 + 54)
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+        frame += 1
+        if max_frames and frame >= max_frames:
+            pygame.quit()
+            return
+
+
+if __name__ == "__main__":
+    main()
     
