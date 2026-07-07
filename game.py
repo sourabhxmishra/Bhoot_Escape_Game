@@ -7,6 +7,7 @@ up the longer you survive. It's tiny, so it runs happily on low-end hardware.
 Controls:  ← →  (or A / D) move  ·  SPACE  start / restart  ·  Esc / Q  quit
 Run:       python game.py         (needs pygame — see requirements.txt)
 """
+import asyncio
 import os
 import sys
 import random
@@ -55,7 +56,15 @@ class Ghost:
         return False
 
 
-def main(max_frames=None):
+def draw_heart(surf, cx, cy, s, color):
+    """Draw a small heart (two circles + a triangle) so it needs no font glyph."""
+    r = max(3, s // 4)
+    pygame.draw.circle(surf, color, (cx - r, cy - r // 2), r)
+    pygame.draw.circle(surf, color, (cx + r, cy - r // 2), r)
+    pygame.draw.polygon(surf, color, [(cx - 2 * r, cy - r // 2), (cx + 2 * r, cy - r // 2), (cx, cy + 2 * r)])
+
+
+async def main(max_frames=None):
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Bhoot Escape")
@@ -114,11 +123,13 @@ def main(max_frames=None):
                         state = "over"
             screen.blit(player_img, player)
             screen.blit(font.render(f"Score {game['score']}", True, GREEN), (16, 12))
-            screen.blit(font.render("HP " + "♥" * game["lives"], True, RED), (WIDTH - 120, 12))
+            screen.blit(font.render("HP", True, RED), (WIDTH - 132, 12))
+            for i in range(game["lives"]):
+                draw_heart(screen, WIDTH - 86 + i * 28, 30, 22, RED)
         elif state == "start":
             centre("BHOOT ESCAPE", big, WHITE, HEIGHT // 2 - 50)
             centre("Dodge the falling ghosts", font, WHITE, HEIGHT // 2 + 6)
-            centre("← →  move    SPACE  start", font, GREEN, HEIGHT // 2 + 54)
+            centre("A / D or arrows  -  SPACE to start", font, GREEN, HEIGHT // 2 + 54)
         else:  # over
             centre("GAME OVER", big, RED, HEIGHT // 2 - 50)
             centre(f"Score  {game['score']}", font, WHITE, HEIGHT // 2 + 6)
@@ -126,6 +137,7 @@ def main(max_frames=None):
 
         pygame.display.flip()
         clock.tick(FPS)
+        await asyncio.sleep(0)
 
         frame += 1
         if max_frames and frame >= max_frames:
@@ -134,5 +146,5 @@ def main(max_frames=None):
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
     
