@@ -127,9 +127,10 @@ async def main(max_frames=None):
             for i in range(game["lives"]):
                 draw_heart(screen, WIDTH - 86 + i * 28, 30, 22, RED)
         elif state == "start":
-            centre("BHOOT ESCAPE", big, WHITE, HEIGHT // 2 - 50)
-            centre("Dodge the falling ghosts", font, WHITE, HEIGHT // 2 + 6)
-            centre("A / D or arrows  -  SPACE to start", font, GREEN, HEIGHT // 2 + 54)
+            centre("BHOOT ESCAPE", big, WHITE, HEIGHT // 2 - 60)
+            centre("Dodge the falling ghosts", font, WHITE, HEIGHT // 2 - 6)
+            centre("Move: A / D or arrows", font, GREEN, HEIGHT // 2 + 40)
+            centre("Press SPACE to start", font, GREEN, HEIGHT // 2 + 74)
         else:  # over
             centre("GAME OVER", big, RED, HEIGHT // 2 - 50)
             centre(f"Score  {game['score']}", font, WHITE, HEIGHT // 2 + 6)
