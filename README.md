@@ -5,6 +5,12 @@ A tiny **2D arcade game** built with **Python + pygame** — dodge the falling *
 ![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)
 ![pygame](https://img.shields.io/badge/pygame-000000?logo=python&logoColor=white)
 [![Download](https://img.shields.io/badge/%E2%AC%87_Download-Windows_.exe-7C3AED)](https://github.com/sourabhxmishra/Bhoot_Escape_Game/releases/latest)
+[![Play online](https://img.shields.io/badge/%E2%96%B6_Play-in_your_browser-22c55e)](https://sourabhxmishra.github.io/Bhoot_Escape_Game/)
+
+## ▶️ Play online (no install)
+The real game, compiled to **WebAssembly** with [pygbag](https://github.com/pygame-web/pygbag) — runs right in your browser:
+
+**▶ [Play Bhoot Escape →](https://sourabhxmishra.github.io/Bhoot_Escape_Game/)**  &nbsp;*(first load takes a few seconds while the Python runtime downloads)*
 
 ## ⬇️ Download & play (Windows)
 Grab **`BhootEscape.exe`** from the **[latest release](https://github.com/sourabhxmishra/Bhoot_Escape_Game/releases/latest)** and double-click it — no Python required. It's a single ~14 MB file with its own ghost app icon.
